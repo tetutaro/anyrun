@@ -1,7 +1,7 @@
 use std::{
     env, fs,
     io::{self, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::Arc,
 };
@@ -35,7 +35,8 @@ pub fn worker(
             let _ = fs::remove_file(&socket_path);
             let listener = UnixListener::bind(&socket_path).unwrap();
 
-            let mut child = match Command::new(&config.provider)
+            let provider = expand_home(&config.provider);
+            let mut child = match Command::new(&provider)
                 .stdin(Stdio::piped())
                 .arg("--config-dir")
                 .arg(config_dir.unwrap_or(ipc::CONFIG_DIRS[0].to_string()))
@@ -54,7 +55,7 @@ pub fn worker(
                 Err(why) => match why.kind() {
                     io::ErrorKind::NotFound => {
                         eprintln!("[anyrun] `{}` Not found, make sure `anyrun-provider` is installed and available in $PATH, \
-                             or configure an alternative path via the `provider` config option.", config.provider.display());
+                             or configure an alternative path via the `provider` config option.", provider.display());
                         return Ok(());
                     }
                     _ => return Err(why),
@@ -98,4 +99,46 @@ pub fn worker(
             Ok(())
         }
     )
+}
+
+/// Expand a leading `~`, `$HOME` or `${HOME}` in the path to the home directory
+fn expand_home(path: &Path) -> PathBuf {
+    let (Ok(home), Some(path_str)) = (env::var("HOME"), path.to_str()) else {
+        return path.to_owned();
+    };
+
+    ["~", "$HOME", "${HOME}"]
+        .iter()
+        .find_map(|prefix| {
+            path_str
+                .strip_prefix(prefix)
+                .filter(|rest| rest.is_empty() || rest.starts_with('/'))
+                .map(|rest| PathBuf::from(format!("{home}{rest}")))
+        })
+        .unwrap_or_else(|| path.to_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn expands_home_prefix() {
+        let home = env::var("HOME").unwrap();
+        for input in ["~", "$HOME", "${HOME}"] {
+            assert_eq!(expand_home(Path::new(input)), PathBuf::from(&home));
+            assert_eq!(
+                expand_home(Path::new(&format!("{input}/.cargo/bin/anyrun-provider"))),
+                PathBuf::from(format!("{home}/.cargo/bin/anyrun-provider"))
+            );
+        }
+        for input in [
+            "anyrun-provider",
+            "/usr/bin/anyrun-provider",
+            "~user/bin",
+            "$HOMEDIR/x",
+        ] {
+            assert_eq!(expand_home(Path::new(input)), PathBuf::from(input));
+        }
+    }
 }
