@@ -1,0 +1,5 @@
+#!/bin/sh
+# Toggle anyrun: close it if it is visible, otherwise show it.
+# Requires the anyrun daemon (`anyrun daemon`) to be running.
+export PATH="$HOME/.cargo/bin:$PATH"
+anyrun close 2>/dev/null || exec anyrun
