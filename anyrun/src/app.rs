@@ -195,9 +195,15 @@ impl Component for App {
                     },
 
                     add_controller = gtk::EventControllerKey {
-                        connect_key_pressed[sender] => move |_, key, _, modifier| {
+                        connect_key_pressed[sender, config] => move |_, key, _, modifier| {
                             sender.input(AppMsg::KeyPressed { key, modifier});
+                            let is_edit = config
+                                .keybinds
+                                .iter()
+                                .find(|keybind| keybind.matches(key, modifier))
+                                .is_some_and(|keybind| keybind.action.is_edit());
                             match key {
+                                _ if is_edit => glib::Propagation::Stop,
                                 gdk::Key::Tab => glib::Propagation::Stop,
                                 _ => glib::Propagation::Proceed,
                             }
@@ -364,12 +370,12 @@ impl Component for App {
                 }
             }
             AppMsg::KeyPressed { key, modifier } => {
-                if let Some(Keybind { action, .. }) = self.config.keybinds.iter().find(|keybind| {
-                    keybind.key == key
-                        && keybind.ctrl == modifier.contains(gdk::ModifierType::CONTROL_MASK)
-                        && keybind.alt == modifier.contains(gdk::ModifierType::ALT_MASK)
-                        && keybind.shift == modifier.contains(gdk::ModifierType::SHIFT_MASK)
-                }) {
+                if let Some(Keybind { action, .. }) = self
+                    .config
+                    .keybinds
+                    .iter()
+                    .find(|keybind| keybind.matches(key, modifier))
+                {
                     sender.input(AppMsg::Action(*action));
                 }
             }
@@ -442,6 +448,27 @@ impl Component for App {
                             plugin.matches.widget().select_row(Some(&plugin_match.row));
                         }
                     }
+                }
+                Action::DeleteBackward => widgets.entry.emit_backspace(),
+                Action::CursorLeft => {
+                    widgets
+                        .entry
+                        .emit_move_cursor(gtk::MovementStep::VisualPositions, -1, false)
+                }
+                Action::CursorRight => {
+                    widgets
+                        .entry
+                        .emit_move_cursor(gtk::MovementStep::VisualPositions, 1, false)
+                }
+                Action::CursorStart => {
+                    widgets
+                        .entry
+                        .emit_move_cursor(gtk::MovementStep::BufferEnds, -1, false)
+                }
+                Action::CursorEnd => {
+                    widgets
+                        .entry
+                        .emit_move_cursor(gtk::MovementStep::BufferEnds, 1, false)
                 }
             },
             AppMsg::EntryChanged(text) => {

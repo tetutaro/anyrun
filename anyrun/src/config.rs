@@ -200,6 +200,26 @@ pub enum Action {
     Select,
     Up,
     Down,
+    DeleteBackward,
+    CursorLeft,
+    CursorRight,
+    CursorStart,
+    CursorEnd,
+}
+
+impl Action {
+    /// Whether the action edits the text entry, in which case the default
+    /// handling of the key press by the entry should be suppressed
+    pub fn is_edit(&self) -> bool {
+        matches!(
+            self,
+            Action::DeleteBackward
+                | Action::CursorLeft
+                | Action::CursorRight
+                | Action::CursorStart
+                | Action::CursorEnd
+        )
+    }
 }
 
 #[derive(Deserialize, Clone)]
@@ -216,6 +236,13 @@ pub struct Keybind {
 }
 
 impl Keybind {
+    pub fn matches(&self, key: gdk::Key, modifier: gdk::ModifierType) -> bool {
+        self.key == key
+            && self.ctrl == modifier.contains(gdk::ModifierType::CONTROL_MASK)
+            && self.alt == modifier.contains(gdk::ModifierType::ALT_MASK)
+            && self.shift == modifier.contains(gdk::ModifierType::SHIFT_MASK)
+    }
+
     fn deserialize_key<'de, D>(deserializer: D) -> Result<gdk::Key, D::Error>
     where
         D: Deserializer<'de>,
