@@ -470,6 +470,9 @@ impl Component for App {
                         .entry
                         .emit_move_cursor(gtk::MovementStep::BufferEnds, 1, false)
                 }
+                Action::DeleteToEnd => widgets
+                    .entry
+                    .emit_delete_from_cursor(gtk::DeleteType::ParagraphEnds, 1),
             },
             AppMsg::EntryChanged(text) => {
                 let _ = self.tx.blocking_send(ipc::Request::Query { text });

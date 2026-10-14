@@ -205,6 +205,7 @@ pub enum Action {
     CursorRight,
     CursorStart,
     CursorEnd,
+    DeleteToEnd,
 }
 
 impl Action {
@@ -218,6 +219,7 @@ impl Action {
                 | Action::CursorRight
                 | Action::CursorStart
                 | Action::CursorEnd
+                | Action::DeleteToEnd
         )
     }
 }

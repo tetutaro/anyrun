@@ -111,6 +111,11 @@ Config(
             action: DeleteBackward,
         ),
         Keybind(
+            ctrl: true,
+            key: "k",
+            action: DeleteToEnd,
+        ),
+        Keybind(
             key: "Escape",
             action: Close,
         ),
