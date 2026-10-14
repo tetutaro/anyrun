@@ -42,10 +42,19 @@ build & run it:
 - `gdk-pixbuf2 (libgdk_pixbuf-2.0)`
 - `glib2 (libgobject-2.0 libgio-2.0 libglib-2.0)`
 
+```
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git build-essential pkg-config libgtk4-layer-shell-dev libgtk-4-dev libpango1.0-dev libcairo2-dev libgdk-pixbuf-2.0-dev libglib2.0-dev
+```
+
 > [!NOTE]
 > Since 25.12.0, Anyrun also depends on [anyrun-provider](https://github.com/anyrun-org/anyrun-provider)
 > to provide search results. Make sure it is installed as well for Anyrun to function. If you don't want to install
 > it into your `$PATH`, you can set the path to it via the `provider` config option.
+
+```
+cargo install --git https://github.com/anyrun-org/anyrun-provider
+```
 
 ## Installation
 

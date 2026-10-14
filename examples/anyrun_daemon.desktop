@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=anyrun daemon
+Comment=Keep anyrun running in the background for faster startup
+Exec=sh -c "PATH=\\$HOME/.cargo/bin:\\$PATH exec anyrun daemon"
+Terminal=false
+Type=Application
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
